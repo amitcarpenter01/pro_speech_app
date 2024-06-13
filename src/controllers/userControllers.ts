@@ -105,10 +105,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
     const currentTime = new Date();
 
     if (user.otp === otp && user.otpExpires && user.otpExpires > currentTime) {
-      user.isVerified = true;
-      user.otp = undefined;
-      user.otpExpires = undefined;
-      await user.save();
+
 
       const payload: { userId: string; email: string } = {
         userId: user._id as string,
@@ -116,6 +113,15 @@ export const verifyOTP = async (req: Request, res: Response) => {
       };
 
       const token = generateAccessToken(payload);
+
+
+      user.isVerified = true;
+      user.otp = undefined;
+      user.otpExpires = undefined;
+      user.jwtToken = token
+      await user.save();
+
+
       return res.status(200).json({
         success: true,
         status: 200, message: 'Email verified successfully.', token
@@ -213,6 +219,8 @@ export const login = async (req: Request, res: Response) => {
       email: user.email
     };
     const token = generateAccessToken(payload);
+    user.jwtToken = token;
+    await user.save()
     return res.status(200).json({
       success: true,
       status: 200, token

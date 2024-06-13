@@ -56,8 +56,6 @@
 //     }
 // };
 
-
-
 import { Request, Response } from 'express';
 import Joi from 'joi';
 import mongoose, { Types } from 'mongoose';
@@ -93,7 +91,12 @@ export const createModule = async (req: Request, res: Response) => {
     //     for (const moduleData of modulesData) {
     //         const { module_name, section_id, lessons, completed_by } = moduleData;
 
-    //         // Ensure section_id is a string (if needed), or keep as ObjectId
+    //         // Convert section_id to Mongoose ObjectId if it's a valid ObjectId string
+    //         const convertedSectionId = Types.ObjectId.isValid(section_id) ? new Types.ObjectId(section_id) : section_id;
+
+    //         // Convert lessons and completed_by to arrays of Mongoose ObjectId
+    //         const convertedLessons = lessons.map((id: string) => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id);
+    //         const convertedCompletedBy = completed_by.map((id: string) => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id);
 
     //         // Create new module instance
     //         const newModule = new Module({
@@ -122,8 +125,6 @@ export const createModule = async (req: Request, res: Response) => {
     //     });
     // }
 };
-
-
 
 
 // Get All Modules

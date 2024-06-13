@@ -19,14 +19,31 @@ const authenticateUser = async (req: Request, res: Response, next: NextFunction)
     const decodedToken = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
     const user = await User.findById(decodedToken.userId);
 
+
     if (!user) {
       return res.status(404).json({
         success: false,
         status: 400, message: 'User not found'
       });
     }
-    req.user = user as IUser;
-    next();
+    const checkToken = await User.findOne({ _id: user._id })
+    if (checkToken?.jwtToken) {
+      if (checkToken.jwtToken == token) {
+        req.user = user as IUser;
+        next();
+      } else {
+        return res.status(401).json({
+          success: false,
+          status: 401, message: 'Unauthorized: Invalid token'
+        });
+      }
+    } else {
+      return res.status(401).json({
+        success: false,
+        status: 401, message: 'Unauthorized: Invalid token'
+      });
+    }
+
   } catch (error) {
     return res.status(401).json({
       success: false,
