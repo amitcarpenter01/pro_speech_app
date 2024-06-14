@@ -1,131 +1,72 @@
-// import Joi from 'joi';
-// import { Request, Response } from 'express';
-// import Module from '../models/Module';
-// import mongoose from 'mongoose';
-
-
-// const moduleSchema = Joi.object({
-//     module_name: Joi.string().required(),
-//     section_id: Joi.string().required(),
-//     lessons: Joi.array().items(Joi.string().required()),
-//     completed_by: Joi.array().items(Joi.string().required())
-// });
-// const modulesSchema = Joi.array().items(moduleSchema);
-
-// export const createModule = async (req: Request, res: Response) => {
-//     try {
-//         const { error } = modulesSchema.validate(req.body);
-//         if (error) {
-//             return res.status(400).json({
-//                 success: false,
-//                 status: 400,
-//                 message: error.details[0].message,
-//             });
-//         }
-//         const modulesData = req.body;
-//         const savedModules = [];
-
-//         for (const moduleData of modulesData) {
-//             const { module_name, section_id, lessons, completed_by } = moduleData;
-//             const convertedLessons = lessons.map((id: string) => (id));
-//             const convertedCompletedBy = completed_by.map((id: string) => new mongoose.Types.ObjectId(id));
-
-//             const newModule = new Module({
-//                 module_name,
-//                 section_id,
-//                 lessons: convertedLessons,
-//                 completed_by: convertedCompletedBy,
-//             });
-
-//             const savedModule = await newModule.save();
-//             savedModules.push(savedModule);
-//         }
-
-//         return res.status(201).json({
-//             success: true,
-//             status: 201,
-//             message: 'Modules created successfully',
-//             data: savedModules,
-//         });
-//     } catch (error: any) {
-//         return res.status(500).json({
-//             success: false,
-//             status: 500,
-//             message: error.message
-//         });
-//     }
-// };
-
 import { Request, Response } from 'express';
 import Joi from 'joi';
 import mongoose, { Types } from 'mongoose';
-import Module, { IModule } from '../models/Module'; // Adjust the import path as per your project structure
+import Module, { IModule } from '../models/Module';
 
-// Define Joi schema for validation
-const moduleSchema = Joi.object({
-    module_name: Joi.string().required(),
-    section_id: Joi.string().required(),
-    lessons: Joi.array().items(Joi.string().required()),
-    completed_by: Joi.array().items(Joi.string().required())
-});
 
-const modulesSchema = Joi.array().items(moduleSchema);
-
+// Create Modules 
 export const createModule = async (req: Request, res: Response) => {
-    // try {
-    //     // Validate request body against schema
-    //     const { error } = modulesSchema.validate(req.body);
-    //     if (error) {
-    //         return res.status(400).json({
-    //             success: false,
-    //             status: 400,
-    //             message: error.details[0].message,
-    //         });
-    //     }
+    try {
+        const isValidObjectId = (id: string) => Types.ObjectId.isValid(id) && new Types.ObjectId(id).toString() === id;
 
-    //     // Extract modules data from request body
-    //     const modulesData: IModule[] = req.body;
-    //     const savedModules: IModule[] = [];
+        const moduleSchema = Joi.object({
+            module_name: Joi.string().required(),
+            section_id: Joi.string().custom((value, helpers) => {
+                if (!isValidObjectId(value)) {
+                    return helpers.message({ custom: 'Invalid section_id' });
+                }
+                return value;
+            }).required(),
+            lessons: Joi.array().items(
+                Joi.string().custom((value, helpers) => {
+                    if (!isValidObjectId(value)) {
+                        return helpers.message({ custom: 'Invalid lesson ID' });
+                    }
+                    return value;
+                })
+            ).required(),
+            completed_by: Joi.array().items(
+                Joi.string().custom((value, helpers) => {
+                    if (!isValidObjectId(value)) {
+                        return helpers.message({ custom: 'Invalid user ID' });
+                    }
+                    return value;
+                })
+            ).required(),
+        });
+        const modulesData = req.body;
+        const { error } = Joi.array().items(moduleSchema).validate(modulesData);
+        if (error) {
+            return res.status(400).json({ success: false, status: 400, error: error.details[0].message });
+        }
+        const savedModules = [];
+        for (const moduleData of modulesData) {
+            const { module_name, section_id, lessons, completed_by } = moduleData;
 
-    //     // Iterate over each module data and save to database
-    //     for (const moduleData of modulesData) {
-    //         const { module_name, section_id, lessons, completed_by } = moduleData;
+            const lessonsObjectIds = lessons.map((lessonId: string) => new Types.ObjectId(lessonId));
+            const completedByObjectIds = completed_by.map((userId: string) => new Types.ObjectId(userId));
 
-    //         // Convert section_id to Mongoose ObjectId if it's a valid ObjectId string
-    //         const convertedSectionId = Types.ObjectId.isValid(section_id) ? new Types.ObjectId(section_id) : section_id;
+            const newModule = new Module({
+                module_name,
+                section_id: new Types.ObjectId(section_id),
+                lessons: lessonsObjectIds,
+                completed_by: completedByObjectIds,
+            });
 
-    //         // Convert lessons and completed_by to arrays of Mongoose ObjectId
-    //         const convertedLessons = lessons.map((id: string) => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id);
-    //         const convertedCompletedBy = completed_by.map((id: string) => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id);
+            const savedModule = await newModule.save();
+            savedModules.push(savedModule);
+        }
 
-    //         // Create new module instance
-    //         const newModule = new Module({
-    //             module_name,
-    //             section_id: convertedSectionId,
-    //             lessons: convertedLessons,
-    //             completed_by: convertedCompletedBy,
-    //         });
-
-    //         // Save module to database
-    //         const savedModule = await newModule.save();
-    //         savedModules.push(savedModule);
-    //     }
-
-    //     return res.status(201).json({
-    //         success: true,
-    //         status: 201,
-    //         message: 'Modules created successfully',
-    //         data: savedModules,
-    //     });
-    // } catch (error: any) {
-    //     return res.status(500).json({
-    //         success: false,
-    //         status: 500,
-    //         message: error.message
-    //     });
-    // }
+        return res.status(201).json({
+            success: true,
+            status: 201,
+            message: 'Modules created successfully',
+            data: savedModules,
+        });
+    } catch (error: any) {
+        return res.status(500).json({ success: false, status: 500, error: error.message });
+    }
 };
-
 
 // Get All Modules
 export const getAllModules = async (req: Request, res: Response) => {
@@ -161,25 +102,11 @@ export const getModuleById = async (req: Request, res: Response) => {
 // update module
 export const updateModuleById = async (req: Request, res: Response) => {
     try {
-        const { error } = modulesSchema.validate(req.body);
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                status: 400,
-                message: error.details[0].message,
-            });
-        }
-
-        const { module_name, section_id, lessons, completed_by } = req.body;
-
+        const { module_name } = req.body;
         const updatedModule = await Module.findByIdAndUpdate(
             req.params.id,
             {
-
                 module_name,
-                section_id,
-                lessons,
-                completed_by,
             },
             { new: true }
         );
@@ -203,6 +130,7 @@ export const updateModuleById = async (req: Request, res: Response) => {
 export const deleteModuleById = async (req: Request, res: Response) => {
     try {
         const deletedModule = await Module.findByIdAndDelete(req.params.id);
+        console.log(deletedModule)
         if (!deletedModule) {
             return res.status(404).json({ success: false, status: 404, message: 'Module not found' });
         }

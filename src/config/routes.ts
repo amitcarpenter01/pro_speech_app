@@ -6,6 +6,7 @@ import user_router from "../routes/userRoutes";
 import quizRoutes from "../routes/quizRoutes";
 import lessonRoutes from "../routes/lessonRoutes";
 import moduleRoutes from "../routes/moduleRoutes";
+import sectionRoutes from "../routes/sectionRoutes";
 
 
 const configureApp = (app: Application): void => {
@@ -16,6 +17,7 @@ const configureApp = (app: Application): void => {
   app.use('/api/quizzes', quizRoutes);
   app.use('/api/lessons', lessonRoutes);
   app.use('/api/modules', moduleRoutes);
+  app.use('/api/sections', sectionRoutes);
 };
 
 

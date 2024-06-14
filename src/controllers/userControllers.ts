@@ -140,7 +140,6 @@ export const verifyOTP = async (req: Request, res: Response) => {
   }
 };
 
-
 // Resend OTP
 export const resendOTPByEmail = async (req: Request, res: Response) => {
   try {
@@ -410,7 +409,7 @@ export const verify_otp_forgot_password = async (req: Request, res: Response) =>
     await user.save();
 
     return res.status(200).json({
-      success: false,
+      success: true,
       status: 200, message: 'otp verifed successfully'
     });
   } catch (error: any) {
@@ -590,7 +589,10 @@ export const signup_google = async (req: Request, res: Response) => {
   const { email, googleId } = req.body;
 
   try {
+
     let user = await User.findOne({ email });
+
+
     if (user) {
       user.googleId = googleId;
       user.signupMethod = 'google';
@@ -607,6 +609,9 @@ export const signup_google = async (req: Request, res: Response) => {
       email: user.email
     };
     const token = generateAccessToken(payload);
+    user.jwtToken = token
+
+
     await user.save();
     res.status(201).json({
       success: true,
@@ -659,6 +664,7 @@ export const signup_facebook = async (req: Request, res: Response) => {
       email: user.email
     };
     const token = generateAccessToken(payload);
+    user.jwtToken = token
     await user.save();
     return res.status(201).json({
       success: true,

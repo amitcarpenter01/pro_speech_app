@@ -9,4 +9,7 @@ router.get('/:id', quizController.getQuizById);
 router.put('/:id', quizController.updateQuizById);
 router.delete('/:id', quizController.deleteQuizById);
 
+
+router.post('/check-answer', quizController.check_quiz);
+
 export default router;

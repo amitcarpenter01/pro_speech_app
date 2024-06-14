@@ -159,6 +159,64 @@ export const deleteQuizById = async (req: Request, res: Response) => {
             status: 200, message: 'Quiz deleted successfully'
         });
     } catch (error: any) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({
+            success: false,
+            status: 500, error: error.message
+        });
+    }
+};
+
+// Check currect answer
+// export const check_quiz = async (req: Request, res: Response) => {
+//     try {
+//         const { questionId, selectedOption } = req.body;
+//         const quiz = await Quiz.findOne({ "questions._id": questionId });
+//         console.log(quiz)
+
+//         if (!quiz) {
+//             return res.status(404).json({ message: 'Question not found' });
+//         }
+
+//         const question = quiz.questions
+
+//         if (!question) {
+//             return res.status(404).json({ message: 'Question not found' });
+//         }
+
+//         // const isCorrect = question.correctOption === selectedAnswer;
+
+//         return res.json({ question });
+//         // return res.json({ isCorrect, correctAnswer: question.correctOption });
+//     } catch (error: any) {
+//         return res.status(500).json({
+//             success: false,
+//             status: 500,
+//             error: error.message,
+//         });
+//     }
+// };
+
+
+export const check_quiz = async (req: Request, res: Response) => {
+    try {
+        const { questionId, selectedOption } = req.body;
+        const quiz = await Quiz.findOne({ "questions._id": questionId });
+        
+        if (!quiz) {
+            return res.status(404).json({ message: 'Question not found' });
+        }
+        const question = quiz.questions.find((q: any) => q._id.toString() === questionId);
+
+        if (!question) {
+            return res.status(404).json({ message: 'Question not found' });
+        }
+        const isCorrect = question.correctOption === selectedOption;
+        return res.json({ isCorrect, correctAnswer: question.correctOption });
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            status: 500,
+            error: error.message,
+        });
     }
 };
